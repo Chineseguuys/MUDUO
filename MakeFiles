@@ -1,0 +1,64 @@
+VPATH = ./base:./net:./test
+vpath %.h base
+vpath %.h net 
+vpath %.cpp test
+vpath %.o build
+vpath %.cc base 
+vpath %.cc net
+vpath %.cc net/poller
+
+COMPIER=clang++
+MAIN_FILE=TcpClient_t2
+
+BUILD_DIR=./build/
+BASE_DIR=./base/
+NET_DIR=./net/
+TEST_DIR=./test/
+POLLER_DIR=./net/poller/
+
+USING_PTHREAD=-lpthread
+
+CC_BASE := $(wildcard $(BASE_DIR)*.cc)
+CC_NET := $(wildcard $(NET_DIR)*.cc)
+CC_POLLER := $(wildcard $(POLLER_DIR)*.cc)
+
+OBJ_BASE := $(patsubst $(BASE_DIR)%.cc, %.o, $(CC_BASE))
+OBJ_NET := $(patsubst $(NET_DIR)%.cc, %.o, $(CC_NET))
+OBJ_POLLER := $(patsubst $(POLLER_DIR)%.cc, %.o, $(CC_POLLER))
+
+OBJ_BASE_FULL := $(patsubst %.o, $(BUILD_DIR)%.o, $(OBJ_BASE))
+OBJ_NET_FULL := $(patsubst %.o, $(BUILD_DIR)%.o, $(OBJ_NET))
+OBJ_POLLER_FULL := $(patsubst %.o, $(BUILD_DIR)%.o, $(OBJ_POLLER))
+
+all : gen_main $(OBJ_BASE) $(OBJ_NET) $(OBJ_POLLER)
+
+
+gen_main : $(MAIN_FILE).o $(OBJ_BASE) $(OBJ_NET) $(OBJ_POLLER)
+	$(COMPIER) -o $(BUILD_DIR)test $(BUILD_DIR)$(MAIN_FILE).o $(OBJ_NET_FULL) $(OBJ_BASE_FULL) $(OBJ_POLLER_FULL)	$(USING_PTHREAD)
+
+
+$(MAIN_FILE).o : $(MAIN_FILE).cpp
+	$(COMPIER) -c -o $(BUILD_DIR)$(MAIN_FILE).o $(TEST_DIR)$(MAIN_FILE).cpp 
+
+
+$(OBJ_BASE) : %.o : %.cc
+	$(COMPIER) -c -o  $(BUILD_DIR)$@   $<
+
+
+$(OBJ_NET) : %.o : %.cc
+	$(COMPIER) -c -o $(BUILD_DIR)$@   $<
+
+
+$(OBJ_POLLER) : %.o : %.cc
+	$(COMPIER) -c -o $(BUILD_DIR)$@   $<
+
+print :
+	echo $(CC_POLLER)
+	echo $(OBJ_POLLER)
+	echo $(OBJ_POLLER_FULL)
+
+clean : 
+	-rm $(BUILD_DIR)*.o 
+
+remvTarget : 
+	-rm $(BUILD_DIR)test

@@ -1,0 +1,20 @@
+digraph G
+{
+    fontsize = 8
+    rankdir = TB
+
+    node [
+        shape = "record"
+        color = "blue"
+    ]
+
+    edge [
+        fontsize = 9
+    ]
+
+    Poller [
+        label = "{Poller | map\<fd, Channel*\> channels_ | EventLoop* loop_}"
+    ]
+
+    
+}

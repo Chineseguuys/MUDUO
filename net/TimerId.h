@@ -1,0 +1,44 @@
+#ifndef MUDUO_NET_TIMERID_H
+#define MUDUO_NET_TIMERID_H
+
+#include "base/copyable.h"
+
+#include <inttypes.h>
+#include <unistd.h>
+
+namespace muduo
+{
+
+namespace net
+{
+
+class Timer;
+
+class TimerId : public muduo::copyable
+{
+public:
+    TimerId()
+        : timer_(NULL),
+          sequence_(0)
+    {}
+
+    TimerId(Timer* timer, int64_t sequence)
+        : timer_(timer),
+          sequence_(sequence)
+    {}
+
+    friend class TimerQueue;
+private:
+    Timer*      timer_;
+    int64_t     sequence_;
+};
+
+} // namespace net
+
+} // namespace muduo
+
+
+
+
+
+#endif
