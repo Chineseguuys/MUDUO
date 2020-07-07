@@ -54,6 +54,10 @@ void EventLoopThread::threadFunc()
 	if (this->callback_)
 	{
 		this->callback_(&loop);
+		/**
+		 * 如果在构造函数传递参数的时候，给出了 ThreadInitCallback ,那么
+		 * 还可以对 loop 进行一些初始化的工作
+		*/
 	}
 	{
 		MutexLockGuard lock(this->mutex_);

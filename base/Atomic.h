@@ -68,7 +68,7 @@ public:
 
 	T getAndSet(T newValue)
 	{
-		return sync_lock_test_and_set(&value_, newValue);
+		return __sync_lock_test_and_set(&value_, newValue);
 	}
 
 private:

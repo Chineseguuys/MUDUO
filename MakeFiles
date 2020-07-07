@@ -8,7 +8,7 @@ vpath %.cc net
 vpath %.cc net/poller
 
 COMPIER=clang++
-MAIN_FILE=eventloopthread_test
+MAIN_FILE=eventloopthreadpool_test
 
 BUILD_DIR=./build/
 BASE_DIR=./base/

@@ -55,7 +55,7 @@ EventLoop* EventLoopThreadPool::getNextLoop()
         ++next_;
         if (implicit_cast<size_t>(next_) >= loops_.size())
         {
-        next_ = 0;
+            next_ = 0;
         }
     }
     return loop;
