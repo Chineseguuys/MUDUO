@@ -42,9 +42,9 @@ private:
 	pid_t				tid_;
 	ThreadFunc			func_;
 	string				name_;
-	CountDownLatch		latch_;
+	CountDownLatch		latch_; /**线程安全的，阻塞式的访问*/
 
-	static AtomicInt32 numCreated_;
+	static AtomicInt32 numCreated_; /**原子访问，不需要进行上锁*/
 };
 
 }

@@ -8,7 +8,7 @@ using namespace muduo::net;
 
 EventLoopThread::EventLoopThread(const ThreadInitCallback& cb, 
 				const string& name)
-		: loop_(NULL),
+		: 	loop_(NULL),
 			exiting_(false),
 			thread_(std::bind(&EventLoopThread::threadFunc, this), name),
 			mutex_(),
@@ -43,6 +43,10 @@ EventLoop* EventLoopThread::startLoop()
 	return loop;
 }
 
+/**
+ * 这个 eventloop 在子线程当中运行起来了，主线程获取到了这个 eventloop 的指针，
+ * 因此在主线程当中也可是对其进行一系列的操作
+*/
 void EventLoopThread::threadFunc()
 {
 	EventLoop loop;

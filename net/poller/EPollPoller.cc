@@ -122,7 +122,7 @@ void EPollPoller::updateChannel(Channel* channel)
 	Poller::assertInLoopThread();
 	const int index = channel->index();
 	LOG_TRACE << "fd = " << channel->fd()
-		<< " events = " << channel->events() << " index = " << index;
+		<< " events = " << channel->events() << " index = "  << index;
 	if (index == kNew || index == kDeleted)
 	{
 		// a new one, add with EPOLL_CTL_ADD

@@ -107,7 +107,7 @@ EventLoop::EventLoop()
     else
     {
         t_loopInThisThread = this;
-        LOG_INFO << "set the t_loopInThisThread " << this << threadId_;
+        LOG_INFO << "set the t_loopInThisThread " << this << " : " << threadId_;
     }
     this->wakeupChannel_->setReadCallback(
         std::bind(&EventLoop::handleRead, this) /*Channel 的读回调函数设置为了 eventloop 的 handleRead*/
@@ -208,6 +208,7 @@ void EventLoop::runInLoop(Functor cb)
 */
 void EventLoop::queueInLoop(Functor cb)
 {
+    LOG_INFO << "push Functor into the eventloop :" << this;
     {
         MutexLockGuard lock(mutex_);
         pendingFunctors_.push_back(std::move(cb));  /**把句柄 cb 放入到待执行队列当中*/
