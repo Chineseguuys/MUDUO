@@ -90,6 +90,9 @@ private:
 	const string name_;
 	std::unique_ptr<Acceptor> acceptor_; // avoid revealing Acceptor
 	std::shared_ptr<EventLoopThreadPool> threadPool_;
+	/**
+	 * 从 eventloopThreadPool 当中获取了一个 pool 之后，可以通过 runAfter() runAt() runInLoop() 来添加事件进入
+	*/
 	ConnectionCallback connectionCallback_;
 	MessageCallback messageCallback_;
 	WriteCompleteCallback writeCompleteCallback_;

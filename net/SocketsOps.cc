@@ -115,6 +115,9 @@ void sockets::bindOrDie(int sockfd, const struct sockaddr* addr)
 void sockets::listenOrDie(int sockfd)
 {
 	int ret = ::listen(sockfd, SOMAXCONN);
+	/**
+	 * 第二个参数表示连接队列的长度，表示在处理一个连接的同时还可以接收其他到达连接的个数
+	*/
 	if (ret < 0)
 	{
 		LOG_SYSFATAL << "sockets::listenOrDie";

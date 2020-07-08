@@ -53,6 +53,9 @@ void TcpServer::setThreadNum(int numThreads)
 	threadPool_->setThreadNum(numThreads);
 }
 
+/**
+ * 这个函数执行后， numThreads 个 ioloop 就开始事件循环
+*/
 void TcpServer::start()
 {
 	if (started_.getAndSet(1) == 0)
@@ -60,6 +63,12 @@ void TcpServer::start()
 		this->threadPool_->start(threadInitCallback_);
 
 		assert(!acceptor_->listenning());
+		/**
+		 * 接收器开始工作，在 loop_ 的下一次循环当中，就会去执行下面的函数（之后执行一次）。后面的工作交给
+		 * 已经注册在 loop_->poller 下面的 socketChannel_ 进行连接到达的处理
+		 * 
+		 * 通过 poll 的轮询查看是否有连接达到
+		*/
 		loop_->runInLoop(
 			std::bind(&Acceptor::listen, get_pointer(acceptor_)));
 	}
@@ -98,7 +107,7 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr)
 		sockfd,
 		localAddr,
 		peerAddr));
-	connections_[connName] = conn;
+	connections_[connName] = conn; /**新的连接添加到 map 当中*/
 	/**
 	 * 一个 Tcp 服务端需要管理多个 Tcp数据连接。使用 map 管理这些连接可以快速进行查找
 	*/

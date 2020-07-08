@@ -353,7 +353,7 @@ void TcpConnection::connectEstablished()
 	assert(state_ == KConnecting);
 	setState(KConnected);
 	channel_->tie(shared_from_this());
-	channel_->enableReading();
+	channel_->enableReading();   /**数据达到时 poll 将会检测到*/
 
 	connectionCallback_(shared_from_this());
 }
