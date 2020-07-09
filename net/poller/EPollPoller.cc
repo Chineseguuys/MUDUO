@@ -24,6 +24,16 @@ static_assert(EPOLLERR == POLLERR,      "epoll uses same flag values as poll");
 static_assert(EPOLLHUP == POLLHUP,      "epoll uses same flag values as poll");
 
 /**
+ * 创建一个新的 epoll_fd 可能发生的错误情况
+ *  EINVAL  size不是正数。
+    EINVAL  在epoll_create1（）的flags标志中包含无效值。
+    EMFILE  达到了用户对epoll设置的最大实例数限制，在/proc/sys/fs/epoll/max_user_instances具体查看
+    EMFILE  达到了进程中文件描述符的最大限制
+    ENFILE  达到了系统范围内对打开文件总数的限制
+    ENOMEM  没有足够的内存来创建内核对象
+*/
+
+/**
  * epoll 不需要像 poll 那样对 channel 进行标号，因为 epoll 会将发生事件的 epoll_struct 自动排列在数据结构的最前面。查询中没有
  * 发生事件的排在后面
  * 
@@ -39,6 +49,9 @@ const int kDeleted  = 2;   /*需要被删除的节点*/
 EPollPoller::EPollPoller(EventLoop* loop)
 	: Poller(loop),
 	  epollfd_(::epoll_create1(EPOLL_CLOEXEC)),
+	  /**
+	   * epoll_create() 这个函数已经过时了，现在很少使用
+	  */
 	  events_(KInitEventListSize)	/*16 个*/
 {
 	if (epollfd_ < 0)
@@ -117,6 +130,9 @@ void EPollPoller::fillActiveChannels(int numEvents, ChannelList* activeChannels)
 	}
 }
 
+/**
+ * 添加事件到 epoll 当中，或者修改受到监控的事件的属性，或者删除一个监控事件
+*/
 void EPollPoller::updateChannel(Channel* channel)
 {
 	Poller::assertInLoopThread();
@@ -126,6 +142,11 @@ void EPollPoller::updateChannel(Channel* channel)
 	if (index == kNew || index == kDeleted)
 	{
 		// a new one, add with EPOLL_CTL_ADD
+		/**
+		 * 如果一个 channel 曾经在 epoll 内，那么它的index 会被设置为 kDeleted, 
+		 * 曾经被删除的还可以继续添加到当前的 epoll 当中来
+		 * 全新的，当然需要添加
+		*/
 		int fd = channel->fd();
 		if (index == kNew)
 		{
@@ -193,7 +214,7 @@ void EPollPoller::update(int operation, Channel* channel)
 	struct epoll_event event;
 	memZero(&event, sizeof event);
 	event.events = channel->events();
-	event.data.ptr = channel;
+	event.data.ptr = channel; /**指针项指向和这个事件绑定的 channel*/
 	int fd = channel->fd();
 	LOG_TRACE << "epoll_ctl op = " << EPollPoller::operationToString(operation)
     	<< " fd = " << fd << " event = { " << channel->eventsToString() << " }";

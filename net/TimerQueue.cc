@@ -199,6 +199,7 @@ void TimerQueue::handleRead()
 	readTimerfd(timerfd_, now);		/**在这里 read 的作用是什么，由于是非阻塞的，无论这个函数执行结果如何，下面的内容都同样的执行*/
 	/**
 	 * 由于事件是由 epoll 所监控，有事件发生的时候触发的，所以这里的 readTimerfd 一定可以读到相应的内容
+	 * read() 的作用就是重置 timerfd_ 的
 	*/
 
 	std::vector<Entry> expired = getExpired(now);

@@ -60,6 +60,10 @@ public:
 
 
 	// for Poller
+	/**
+	 * 在 poll 当中进行使用，方便查找 channel 对应的 pollfd_ 对象，
+	 * 在 epoll 当中没有什么作用 (epoll_event.data.ptr 存储了 channel*，直接就可以查找得到)
+	*/
 	int index() { return index_; }
 	void set_index(int idx) { index_ = idx; }
 
@@ -87,7 +91,15 @@ private:
 	EventLoop* loop_;
 	const int  fd_;
 	int        events_;
+	/**
+	 * events_ 存储的是一个事件需要被监控的事件的类型，比方说一个 socket 连接，可能即需要
+	 * 监控读事件又需要监控写事件 (poll, epoll)
+	*/
 	int        revents_; // it's the received event types of epoll or poll
+	/**
+	 * revents_ 是 epoll 或者 poll 返回的事件类型，可能是可读，可能是可写，还有可能是一些错误描述
+	 * channel 需要根据相应的 revents_ 来调用相应的 回调来处理这些事件
+	*/
 	int        index_; // used by Poller.
 	bool       logHup_;	/*是否对 hup 进行日志的记录*/
 

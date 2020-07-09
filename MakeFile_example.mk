@@ -6,15 +6,17 @@ vpath %.cc base
 vpath %.cc net
 vpath %.cc net/poller
 vpath %.cc examples/filetransfer
+vpath %.cc examples/chats
 
 COMPIER=clang++
-MAIN_FILE=download
+MAIN_FILE=client
 
 BUILD_DIR=./build/
+EXE_DIR=./executable/
 BASE_DIR=./base/
 NET_DIR=./net/
 # 这部分会经常性的变化
-TEST_DIR=./examples/filetransfer/
+TEST_DIR=./examples/chats/
 POLLER_DIR=./net/poller/
 
 USING_PTHREAD=-lpthread
@@ -35,7 +37,7 @@ all : gen_main $(OBJ_BASE) $(OBJ_NET) $(OBJ_POLLER)
 
 
 gen_main : $(MAIN_FILE).o $(OBJ_BASE) $(OBJ_NET) $(OBJ_POLLER)
-	$(COMPIER) -o $(BUILD_DIR)test $(BUILD_DIR)$(MAIN_FILE).o $(OBJ_NET_FULL) $(OBJ_BASE_FULL) $(OBJ_POLLER_FULL)	$(USING_PTHREAD)
+	$(COMPIER) -o $(EXE_DIR)$(MAIN_FILE) $(BUILD_DIR)$(MAIN_FILE).o $(OBJ_NET_FULL) $(OBJ_BASE_FULL) $(OBJ_POLLER_FULL)	$(USING_PTHREAD)
 
 
 $(MAIN_FILE).o : $(MAIN_FILE).cc

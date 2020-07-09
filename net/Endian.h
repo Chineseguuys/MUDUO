@@ -42,7 +42,7 @@ inline uint64_t networkToHost64(uint64_t net64)
 
 inline uint32_t networkToHost32(uint32_t net32)
 {
-  	 be32toh(net32);
+  	return be32toh(net32);
 }
 
 inline uint16_t networkToHost16(uint16_t net16)

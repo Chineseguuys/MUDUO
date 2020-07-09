@@ -73,6 +73,10 @@ void PollPoller::fillActiveChannles(int numEvents, ChannelList* activeChannels) 
 		{
 			--numEvents;
 			ChannelMap::const_iterator ch = channels_.find(pfd->fd);
+			/**
+			 * epoll 中还包含指针项，可以指向 channel* 对象，这使得 epoll 比 poll 又多了一个方便的地方，就是
+			 * 不需要去集合中查询 channel 了，直接通过指针就可以找到 channel
+			*/
 			assert(ch != channels_.end());
 			Channel* channel = ch->second;
 			assert(channel->fd() == pfd->fd);
@@ -82,7 +86,9 @@ void PollPoller::fillActiveChannles(int numEvents, ChannelList* activeChannels) 
 	}
 }
 
-
+/**
+ * 添加 监测的事件，或者修改所监测的事件的类型
+*/
 void PollPoller::updateChannel(Channel* channel)
 {
 	Poller::assertInLoopThread();

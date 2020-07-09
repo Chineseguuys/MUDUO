@@ -8,7 +8,7 @@
 struct epoll_event;
 /**
  *     typedef union epoll_data {
-        void *ptr;
+        void *ptr;  // 可以用来指向 channel* 
          int fd;
          __uint32_t u32;
          __uint64_t u64;
