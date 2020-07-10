@@ -14,6 +14,9 @@ using namespace muduo::net;
 
 /**
  * 默认的连接回调是打印当前的连接状态
+ * 每当 TcpConnection 的状态发生了变化的时候，都会通过回调来通知上层的模块，上层的模块根据状态的变化可以进行
+ * 相应的处理
+ * 如果上层不打算进行处理的话，默认的处理方式就是打印状态
 */
 void muduo::net::defaultConnectionCallback(const TcpConnectionPtr& conn)
 {
@@ -26,6 +29,9 @@ void muduo::net::defaultConnectionCallback(const TcpConnectionPtr& conn)
  * 为什么默认的设置为这个？
  * 在完成了数据的读取之后，TCP 的上一层应该及时的将缓冲区的数据取走
  * 默认情况下，就是直接丢弃数据，不做任何的处理
+ * 
+ * 作为上层的模块，不存在不取 TcpConnection 当中的数据或者只取部分数据，一定是全部取出来
+ * 进行处理，如果上层不打算取走数据，那么全部进行舍弃
 */
 void muduo::net::defaultMessageCallback(const TcpConnectionPtr&,
 										Buffer* buf,
@@ -178,6 +184,8 @@ void TcpConnection::sendInLoop(const void* data, size_t len)
 	if (!this->channel_->isWriting() && outputBuffer_.readableBytes() == 0)
 	{
 		/**
+		 * 如果 this->channel_->isWriting() == true 这个分支不会执行 ------- channel 可写
+		 * 如果 this->channel_->isWriting() == false 那么这个分支将会被执行------ channel 不可写
 		 * 发送缓冲区中的内容全部都发送完了，我们就直接绕过缓冲区，直接向 socket 发送我们的数据
 		*/
 		nwrote = sockets::write(channel_->fd(), data, len);
@@ -209,11 +217,15 @@ void TcpConnection::sendInLoop(const void* data, size_t len)
 
 	/**
 	 * 有数据没有发送完
+	 * 或者 channel 可写，内容写入缓冲区
 	*/
 	assert(remaining <= len);
 	if (!faultError && remaining > 0)
 	{
 		size_t oldLen = outputBuffer_.readableBytes();  /**输出缓冲区还有数据的话，有多少数据*/
+		/**
+		 * oldLen 是当前的缓冲区中还有的数据，remaining 是当前发送端还需要发送的数据
+		*/
 		if (oldLen + remaining >= highWaterMark_ &&
 			oldLen < highWaterMark_ &&
 			highWaterMarkCallback_)
@@ -225,6 +237,10 @@ void TcpConnection::sendInLoop(const void* data, size_t len)
 		*/
 
 		if (!channel_->isWriting())
+		/**
+		 * 如果 channel 被设置为不可写，那么将其设置为可写
+		 * 如果不设置为 可写，那么在 epoll 事件触发的时候无法 channel 无法处理可写事件
+		*/
 			channel_->enableWriting();
 	}
 }
@@ -233,7 +249,7 @@ void TcpConnection::shutdown()
 {
 	if (this->state_ == KConnected)
 	{
-		this->setState(KDisconnecting);
+		this->setState(KDisconnecting); /*准备关闭状态*/
 		loop_->runInLoop(std::bind(&TcpConnection::shutdownInLoop, this));
 	}
 }
@@ -246,6 +262,10 @@ void TcpConnection::shutdownInLoop()
 {
 	this->loop_->assertInLoopThread();
 	if (!channel_->isWriting())
+	/**
+	 * 缓冲区内有数据的话，那么无法进行 shutdowndown()
+	 * 并且 shutdown 只关闭写端不关闭读端
+	*/
 	{
 		socket_->shutdownWrite();
 	}
@@ -384,6 +404,9 @@ void TcpConnection::handleRead(Timestamp receiveTime)
 		this->messageCallback_(shared_from_this(), &inputBuffer_, receiveTime);
 	}
 	else if (n == 0)
+		/**
+		 * 没有读到任何的数据
+		*/
 		handleClose(); /*为什么？*/
 	else 
 	{
@@ -410,6 +433,12 @@ void TcpConnection::handleWrite()
 				 * 输出缓冲区空了，需要提醒上层的模块，需要向 buffer 里面输出数据了
 				*/
 				this->channel_->disableWriting();
+				/**
+				 * 将 channel 设置为 disableWriting() 那么下一次 send 数据可以直接向 socket 进行发送
+				 * 但是这个操作需要 epoll 进行设置
+				 * 原因也很简单，那就是如果缓冲区没有了数据，下一次可写事件被 epoll 触发之后，也没有数据可以发送
+				 * 还不如在下一次循环当中不监测这个事件的可写状态，等待主动 send() 数据的时候直接写 socket 
+				*/
 				if (writeCompleteCallback_)
 				{
 					this->loop_->queueInLoop(std::bind(writeCompleteCallback_, shared_from_this()));

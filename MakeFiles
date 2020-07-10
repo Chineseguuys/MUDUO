@@ -6,15 +6,16 @@ vpath %.o build
 vpath %.cc base 
 vpath %.cc net
 vpath %.cc net/poller
+vpath %.cpp examples/filetransfer
 
 COMPIER=clang++
-MAIN_FILE=eventloopthreadpool_test
+#MAIN_FILE=client
 
 BUILD_DIR=./build/
 BASE_DIR=./base/
 NET_DIR=./net/
 # 这部分会经常性的变化
-TEST_DIR=./test/
+#TEST_DIR=./examples/filetransfer/
 POLLER_DIR=./net/poller/
 
 USING_PTHREAD=-lpthread
@@ -35,7 +36,7 @@ all : gen_main $(OBJ_BASE) $(OBJ_NET) $(OBJ_POLLER)
 
 
 gen_main : $(MAIN_FILE).o $(OBJ_BASE) $(OBJ_NET) $(OBJ_POLLER)
-	$(COMPIER) -o $(BUILD_DIR)test $(BUILD_DIR)$(MAIN_FILE).o $(OBJ_NET_FULL) $(OBJ_BASE_FULL) $(OBJ_POLLER_FULL)	$(USING_PTHREAD)
+	$(COMPIER) -o $(BUILD_DIR)$(MAIN_FILE) $(BUILD_DIR)$(MAIN_FILE).o $(OBJ_NET_FULL) $(OBJ_BASE_FULL) $(OBJ_POLLER_FULL)	$(USING_PTHREAD)
 
 
 $(MAIN_FILE).o : $(MAIN_FILE).cpp

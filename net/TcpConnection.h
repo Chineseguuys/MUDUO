@@ -49,6 +49,9 @@ private:
 	CloseCallback closeCallback_;
 
 	size_t highWaterMark_;
+	/**
+	 * 每一个 Tcp 连接都维持了一个输出缓冲区和一个输入缓冲区
+	*/
 	Buffer inputBuffer_;
 	Buffer outputBuffer_; // FIXME: use list<Buffer> as output buffer.
 	boost::any context_;

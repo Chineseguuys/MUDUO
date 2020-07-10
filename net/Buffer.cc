@@ -19,7 +19,7 @@ const size_t Buffer::kInitialSize;
 */
 ssize_t Buffer::readfd(int fd, int* savedErrno)
 {
-	char extrabuf[65536];
+	char extrabuf[65536];   /**64 KB 的缓冲区*/
 	struct iovec vec[2];    /**分散存储*/
 	const size_t writable = this->writableBytes();
 	vec[0].iov_base = this->begin() + this->writer_index_;	/*可写区域开始的位置*/

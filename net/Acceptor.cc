@@ -45,6 +45,9 @@ void Acceptor::listen()
 	this->listenning_  = true;
 	this->acceptSocket_.listen();
 	this->accpetChannel_.enableReading();	/**这个时候， socketfd 被注册到 poller 当中，接受 poller 的检测*/
+	/**
+	 * 一但开始了监听的过程，那么将会不断的处理新到达的连接
+	*/
 }
 
 void Acceptor::handleRead()

@@ -57,9 +57,14 @@ void onConnection(const TcpConnectionPtr& conn)
                 << " to " << conn->peerAddress().toIpPort();
         conn->setHighWaterMarkCallback(onHighWaterMark, 64*1024);
         string fileContent = readFile(g_file);
+        printf("file contents : \n %s\n", fileContent.c_str());
         conn->send(fileContent);
         conn->shutdown();
         LOG_INFO << "FileServer - done";
+    }
+    if (conn->disconnected())
+    {
+        LOG_INFO << "download -- FileServer - TcpConnection double direction distoried";  
     }
 }
 
@@ -73,6 +78,7 @@ int main(int argc, char* argv[])
         EventLoop loop;
         InetAddress listenAddr(2021);   /**监控计算机本地的 2021 端口*/
         TcpServer server(&loop, listenAddr, "FileServer");
+        server.setThreadNum(1);
         server.setConnectionCallback(onConnection);
         server.start();
         loop.loop();
