@@ -134,3 +134,8 @@ struct timespec it_value; /* Initial expiration */
 
 * 在我们使用 ```select``` , ```poll```, ```epoll``` 的时候，将 socket 设置为非阻塞，然后通过 ```select``` , ```poll```, ```epoll``` 来管理这些 socket 
 
+
+
+## 注意
+
+epoll， poll, select 并不是自动触发的，需要在循环当中不断的进行查询，如果循环过程中处理的事务比较的多，噪声每一次循环用时比较的长，一定程度上事件就无法得到及时的处理

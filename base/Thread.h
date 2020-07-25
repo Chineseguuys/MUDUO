@@ -45,6 +45,10 @@ private:
 	CountDownLatch		latch_; /**线程安全的，阻塞式的访问*/
 
 	static AtomicInt32 numCreated_; /**原子访问，不需要进行上锁*/
+	/**
+	 * static 类型，所有的 Thread 实例只需要保留一个 numCreated_; 
+	 * 它可以用来指示创建的 Thread 的数量
+	*/
 };
 
 }

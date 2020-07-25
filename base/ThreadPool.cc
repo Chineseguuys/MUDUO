@@ -73,10 +73,14 @@ void ThreadPool::stop()
 
     for (auto& thr : this->threads_)
         thr->join();
+    /**
+     * 线程池所再的线程(主线程) 阻塞的等待所由的子线程释放自己的资源
+    */
 }
 
 /**
  * 一个线程池中的线程将会循环执行这里面的内容，不断的从 queue 当中读出待执行的函数，进行执行
+ * 这个函数也是整个线程池的核心内容
 */
 void ThreadPool::runInThread()
 {
@@ -84,7 +88,7 @@ void ThreadPool::runInThread()
     {
         if (this->threadInitCallback_)
             this->threadInitCallback_();
-        while(this->running_)
+        while(this->running_)   /**在这里我们可以终止线程池的执行的过程*/
         {
             Task task(this->take());
             if (task)
@@ -124,6 +128,9 @@ ThreadPool::Task ThreadPool::take()
         queue_.pop_front();
 
         if (maxQueueSize_ > 0)
+        /**
+         * 线程池中的子线程负责从 队列当中取出任务来进行执行；主线程负责向我们的线程池当中加入任务
+        */
             notFull_.notify_all();
     }
 
@@ -139,7 +146,7 @@ ThreadPool::Task ThreadPool::take()
 void ThreadPool::run(Task task)
 {
     /**
-     * 线程池里面没有线程，那么就无法使用线程池来执行我们的任务，那么就直接执行这个任务
+     * 线程池里面没有子线程，那么就无法使用线程池来执行我们的任务，那么就直接执行这个任务
     */
     if (this->threads_.empty())
         task();
@@ -158,6 +165,9 @@ void ThreadPool::run(Task task)
         assert(!this->isFull());
         
         this->queue_.push_back(std::move(task));
+        /**
+         * 新的任务添加到线程池当中，主线程通过条件变量提醒所有在等待任务的线程，新的任务已经到达了
+        */
         notEmpty_.notify_all();
     }
 }

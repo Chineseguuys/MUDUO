@@ -115,6 +115,9 @@ struct ThreadData
 	}
 };
 
+/**
+ * 这个函数是真正在子线程中被包装的函数，它被传递到  pthread_create() 中的任务函数
+*/
 void* startThread(void* obj)
 {
 	ThreadData* data = static_cast<ThreadData*>(obj);

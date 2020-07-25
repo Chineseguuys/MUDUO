@@ -16,8 +16,8 @@ void threadFunc(EventLoop* loop)
 	 * eventloop 来进行处理的，所以在 5s 钟之后，这个函数内部的局部变量将会被析构掉，
 	 * 不管连接是否成功(实际上这个连接是永远不可能成功的)
 	*/
-	CurrentThread::sleepUsec(5*1000*1000);
 	client.disconnect();
+	CurrentThread::sleepUsec(5*1000*1000);
 	// client destructs when connected.
 }
 
@@ -26,9 +26,9 @@ int main(int argc, char* argv[], char* env[])
 	Logger::setLogLevel(Logger::DEBUG);
 	
 	EventLoop loop;
-	loop.runAfter(25.0, std::bind(&EventLoop::quit, &loop));
+	loop.runAfter(15.0, std::bind(&EventLoop::quit, &loop));
 	/**
-	 * eventloop 运行 25s 钟的时间
+	 * eventloop 运行 10s 钟的时间
 	*/
 	Thread thr(std::bind(threadFunc, &loop));
 	thr.start();

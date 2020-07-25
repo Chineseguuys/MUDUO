@@ -29,11 +29,18 @@ public:
 	typedef std::function<void (Timestamp)> ReadEventCallback;
 
 	Channel(EventLoop* event, int fd);
+	/**
+	 * fd : 哪一个文件描述符的事件通过 channel 进行传递和处理
+	 * event : 在哪一个事件循环中进行处理
+	*/
 	~Channel();
 
 	void handleEvent(Timestamp receiveTime);
 
 	// 几个回调
+	/**
+	 * 读事件，写事件，关闭，错误处理
+	*/
 	void setReadCallback(ReadEventCallback cb)
 	{ readCallback_ = std::move(cb); }
 	void setWriteCallback(EventCallback cb)

@@ -9,13 +9,13 @@ vpath %.cc net/poller
 vpath %.cpp examples/filetransfer
 
 COMPIER=clang++
-#MAIN_FILE=client
+MAIN_FILE=TcpClient_t4
 
 BUILD_DIR=./build/
 BASE_DIR=./base/
 NET_DIR=./net/
 # 这部分会经常性的变化
-#TEST_DIR=./examples/filetransfer/
+TEST_DIR=./test/
 POLLER_DIR=./net/poller/
 
 USING_PTHREAD=-lpthread

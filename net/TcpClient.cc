@@ -103,19 +103,23 @@ void TcpClient::connect()
 /**
  * connector 负责将一个建立一个连接
  * TcpConnecion 负责再已经建立的连接上面进行数据的传输，和最终断开连接
+ * disconnect() 函数只关闭写端，即关闭发送数据的能力
+ * 如果缓冲区内有数据，这个函数执行失败
 */
 void TcpClient::disconnect()
 {
 	this->connect_ = false;
 	{
 		MutexLockGuard lock(this->mutex_);
+		LOG_INFO << "the connection_ is " << (this->connection_ ? "NotEmpty" : "Empty");
 		if (this->connection_)
 			this->connection_->shutdown();
 	}
 }
 
 /**
- * 停止当前的连接过程
+ * 停止当前的连接过程，如果连接还没有建立起来的话，那么可以中断连接的过程，但是如果连接已经建立，
+ * 这个函数没有作用
 */
 void TcpClient::stop()
 {
@@ -162,6 +166,7 @@ void TcpClient::removeConnection(const TcpConnectionPtr& conn)
 {
 	this->loop_->assertInLoopThread();
 	assert(this->loop_ = conn->getLoop());
+
 
 	{
 		MutexLockGuard lock(this->mutex_);

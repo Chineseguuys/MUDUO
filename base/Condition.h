@@ -8,6 +8,10 @@
 namespace muduo
 {
 
+/**
+ * 当一个线程获取了某些资源,同时还需要其他的一些资源,但是这些资源的条件还没有满足,我们可以使用条件变量
+ * 条件变量和操作系统中的信号量非常的相似
+*/
 
 /**
  * 为什么要使用 condition
@@ -37,6 +41,10 @@ public:
 	void wait()
 	{
 		MutexLock::UnassignGuard ug(mutex_);
+		/**
+		 * 将 mutex_ 的 holder_ 设置为 0，在 pthread_cond_wait() 当中，当前的线程将会释放锁，并进入到
+		 * 休眠当中
+		*/
 		MCHECK(pthread_cond_wait(&pcond_, mutex_.getPthreadMutex()));
 	}
 

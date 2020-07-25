@@ -12,6 +12,9 @@
 using namespace muduo;
 using namespace muduo::net;
 
+
+
+
 /**
  * 默认的连接回调是打印当前的连接状态
  * 每当 TcpConnection 的状态发生了变化的时候，都会通过回调来通知上层的模块，上层的模块根据状态的变化可以进行
@@ -50,7 +53,7 @@ TcpConnection::TcpConnection(EventLoop* loop,
 							 const InetAddress& peerAddr)
 	: loop_(CHECK_NOTNULL(loop)), /*TcpConnection 属于一个 eventloop*/
 	  name_(nameArg),
-	  state_(KConnecting),
+	  state_(KConnecting), /*连接已经在 Connector 当中完成了建立*/
 	  reading_(true),
 	  socket_(new Socket(sockfd)),	/**完成操作系统层面的 套接字的连接过程*/
 	  channel_(new Channel(loop, sockfd)),
@@ -185,7 +188,7 @@ void TcpConnection::sendInLoop(const void* data, size_t len)
 	{
 		/**
 		 * 如果 this->channel_->isWriting() == true 这个分支不会执行 ------- channel 可写
-		 * 如果 this->channel_->isWriting() == false 那么这个分支将会被执行------ channel 不可写
+		 * 如果 this->channel_->isWriting() == false 那么这个分支将会被执行------ channel 和 epoll 没有监听相应的事件
 		 * 发送缓冲区中的内容全部都发送完了，我们就直接绕过缓冲区，直接向 socket 发送我们的数据
 		*/
 		nwrote = sockets::write(channel_->fd(), data, len);
@@ -261,12 +264,14 @@ void TcpConnection::shutdown()
 void TcpConnection::shutdownInLoop()
 {
 	this->loop_->assertInLoopThread();
+	LOG_TRACE << "channel_->isWritting() == true";
 	if (!channel_->isWriting())
 	/**
 	 * 缓冲区内有数据的话，那么无法进行 shutdowndown()
 	 * 并且 shutdown 只关闭写端不关闭读端
 	*/
 	{
+		LOG_TRACE << "channel_->isWriting() == false";
 		socket_->shutdownWrite();
 	}
 }
@@ -383,6 +388,9 @@ void TcpConnection::connectDestroyed()
 	this->loop_->assertInLoopThread();
 	if (this->state_ == KConnected)
 	{
+		/**
+		 * 从连接状态转换为断开状态。 epoll 不再检测这个连接 socket 任何的事件
+		*/
 		this->setState(KDisconnected);
 		channel_->disableAll();
 
@@ -401,11 +409,16 @@ void TcpConnection::handleRead(Timestamp receiveTime)
 
 	if (n > 0)
 	{
+		/**
+		 * 立刻通知高层的模块，应该取走这些接收到的数据
+		*/
 		this->messageCallback_(shared_from_this(), &inputBuffer_, receiveTime);
 	}
 	else if (n == 0)
 		/**
 		 * 没有读到任何的数据
+		 * 有两种可能的情况，第一种是另一端使用了 close() 关闭了读端和写端。这个时候，我们发送任何的数据都是没有意义的
+		 * 所以关闭这个 TcpConnection 禁止所有的读写的操作
 		*/
 		handleClose(); /*为什么？*/
 	else 
@@ -471,7 +484,10 @@ void TcpConnection::handleClose()
 	assert(state_ == KConnected || state_ == KDisconnecting);
 
 	setState(KDisconnected);
-	channel_->disableAll();
+	channel_->disableAll(); /*不再监听这个 sockfd 的任何的事件*/
+	/**
+	 * 事件自然也从 epoll 监听队列当中被移除
+	*/
 
 	TcpConnectionPtr guardThis(shared_from_this());
 	connectionCallback_(guardThis);	/**更高层的模块传递过来的一个回调函数*/

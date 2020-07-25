@@ -26,7 +26,8 @@ int createTimerfd()
 	/**
 	 * CLOCK_REALTIME:系统时间的实时时间
 	 * CLOCK_MONOTONIC: 以固定的速率运行，从不进行调整和复位 ,它不受任何系统time-of-day时钟修改的影响
-	 * 
+	 * 如果使用的是 CLOCK_MONOTONIC 的话，那么在设置定时时间的时候，设置的值是从 timerfd_settime() 
+	 * 开始的时间间隔。
 	 * 第二个参数和 eventfd() 函数中的相同
 	*/
 	if (timerfd < 0)
@@ -137,6 +138,9 @@ TimerId TimerQueue::addTimer(TimerCallback cb,
 	*/
 {
 	Timer* timer = new Timer(std::move(cb), when, interval);
+	/**
+	 * 一个新的 timer 是通过 new 产生的，注意释放
+	*/
 	loop_->runInLoop(
 		std::bind(&TimerQueue::addTimerInLoop, this, timer));
 		/*这个 addTimerInLoop 未必在第一时间就被执行， 要看 loop_ 何时去调用它*/
@@ -266,6 +270,9 @@ void TimerQueue::reset(const std::vector<Entry>& expired, Timestamp now)
 		else 
 		{
 			delete it.second;
+			/**
+			 * 已经没有用的定时器需要及时的释放内存
+			*/
 		}
 	}
 

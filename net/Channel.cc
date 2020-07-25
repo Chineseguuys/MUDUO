@@ -60,6 +60,9 @@ void Channel::remove()
     loop_->removeChannel(this);
 }
 
+/**
+ * 如果一个类其注册的事件回调发生的时候，自己已经被析构了怎么办？
+*/
 void Channel::handleEvent(Timestamp receiveTime)
 {
     std::shared_ptr<void> guard;
@@ -83,9 +86,15 @@ void Channel::handleEvent(Timestamp receiveTime)
 void Channel::handleEventWithGuard(Timestamp receiveTime)
 {
     eventHandling_ = true;  /**事件正在处理*/
+    /**
+     * eventHandling_ 只在这里进行修改，其他的地方都是只读，不需要上锁
+    */
     LOG_TRACE << reventsToString();
     if ((revents_ & POLLHUP) && !(revents_ & POLLIN))   /**指定的文件描述符挂起状态，并且没有数据可读*/
     {
+        /**
+         * POLLHUP 表示 socket 已经不再连接，在 TCP 中意味着 FIN 已经收到并发送
+        */
         if (logHup_)
         {
             LOG_WARN << "fd = " << fd_ << " Channel::handle_event() POLLHUP";

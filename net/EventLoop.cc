@@ -215,6 +215,9 @@ void EventLoop::queueInLoop(Functor cb)
     }
 
     if (!isInLoopThread() || callingPendingFunctors_)
+    /**
+     * 如果添加任务的线程和 loop 所在的线程不是同一个线程，或者 loop 正在执行 pendingFunctors_则执行唤醒
+    */
     {
         wakeup();
     }

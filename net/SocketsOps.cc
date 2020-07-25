@@ -142,6 +142,8 @@ int sockets::accept(int sockfd, struct sockaddr_in6* addr)
 	 * 因此通过这个文件描述符就可以进行一对一的通信
 	 * 服务器在端口上会建立数据队列和连接请求队列，连接请求队列的内容会送往 sockfd(connect()函数所指定的套接字)
 	 * 数据队列的内容，操作系统根据 客户端的 ip 和端口号，决定其发往哪一个 connfd
+	 * 
+	 * addrlen 在函数返回的时候，将会包含真实的 sockaddr 的长度
 	*/
 #endif
 	if (connfd < 0)
@@ -163,14 +165,14 @@ int sockets::accept(int sockfd, struct sockaddr_in6* addr)
 				// expected errors
 				errno = savedErrno;
 				break;
-			case EBADF:
-			case EFAULT:
-			case EINVAL:
-			case ENFILE:
+			case EBADF:  /*提供的 socket 根本就不是一个文件描述符*/
+			case EFAULT: /*addr 这个参数不是一个用户空间可以写的内存位置*/
+			case EINVAL: /*accept4(） 提供了一个错误的 flags 参数*/
+			case ENFILE: /*当前的进程可以打开的文件描述符的个数达到了上限，或者操作系统可以打开的文件描述符的个数达到了上限*/
 			case ENOBUFS:
 			case ENOMEM:
-			case ENOTSOCK:
-			case EOPNOTSUPP:
+			case ENOTSOCK: /*提供的文件描述符不是一个 socket 套接字*/
+			case EOPNOTSUPP: /*socket 不是一个流类型的 套接字 SOCK_STREAM*/
 				// unexpected errors
 				/**
 				 * 上面的这个错误会导致线程的退出

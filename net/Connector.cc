@@ -11,7 +11,7 @@ using namespace muduo;
 using namespace muduo::net;
 
 
-const int Connector::kMaxRetryDelayMs;
+const int Connector::kMaxRetryDelayMs; /*最大的重连延时为 30s */
 
 Connector::Connector(EventLoop* loop, const InetAddress& serverAddr)
 	:   loop_(loop),
@@ -172,7 +172,7 @@ void Connector::handleWrite()
 
 	if (this->state_ == KConnecting)	/**正在连接当中，还没有完成连接*/
 	{
-		int sockfd = removeAndResetChannel();
+		int sockfd = removeAndResetChannel(); /*连接已经完成， 这个 channel 已经没有必要继续监控了*/
 		int err = sockets::getSocketError(sockfd);
 		if (err)
 		{
@@ -213,7 +213,8 @@ void Connector::handleError()
 
 void Connector::retry(int sockfd)
 {
-	sockets::close(sockfd);	/**注意在这里关闭 socket,否则多次 retry 会导致生成了大量的没有用的 socket*/
+	sockets::close(sockfd);	
+	/**注意在这里关闭 socket,否则多次 retry 会导致生成了大量的没有用的 socket*/
 	this->setState(KDisconnected);
 	if (this->connect_)
 	{
