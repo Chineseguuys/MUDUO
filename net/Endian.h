@@ -22,6 +22,13 @@ namespace sockets
 */
 inline uint64_t hostToNetwork64(uint64_t host64)
 {
+	/**
+	 * 所为的 be = big endian 大端存储
+	 * 指的是在内存中，高位存储在较低的地址位置，低位存储在比较高的地址位置
+	 * 小端存储和大端刚好是相反的
+	 * TCP/IP 协议中规定，数值使用大端存储进行处理  
+	 * 内存的存储是以字节为最小的单位进行的，不是比特
+	*/
   	return htobe64(host64);
 }
 

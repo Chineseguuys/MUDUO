@@ -271,7 +271,11 @@ void sockets::toIp(char* buf, size_t size,
 {
 	if (addr->sa_family == AF_INET)
 	{
-		assert(size >= INET_ADDRSTRLEN);
+		assert(size >= INET_ADDRSTRLEN); 
+		/**
+		 * 对于 ipv4 地址来说，最大的字符串的长度为 127.127.127.127 为 15， 字符串的结尾符号 '\0'占据一个字节，所以
+		 * 一共需要 16个字节的位置
+		*/
 		const struct sockaddr_in* addr4 = sockaddr_in_cast(addr);
 		::inet_ntop(AF_INET, &addr4->sin_addr, buf, static_cast<socklen_t>(size));
 	}

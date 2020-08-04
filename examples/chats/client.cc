@@ -85,7 +85,9 @@ int main(int argc, char* argv[])
         {
             clinet.write(line);
         }
-
+        /**
+         * 没有数据发送了
+        */
         clinet.disconnect();
         CurrentThread::sleepUsec(1000 * 1000);
     }

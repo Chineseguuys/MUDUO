@@ -117,6 +117,48 @@ struct timespec it_value; /* Initial expiration */
 
 * epoll 一旦用户程序和某些 socket 关联之后，一般不会再改变。（不再进行重复的添加和删除）。epoll 会将触发的 socket 排在数组的最前面，所以就不需要全部遍历了。（<font color=red>epoll 同样提供了添加和删除监控的 socket 功能，并没有失去灵活性</font>）
 
+## 相关的函数
+
+```c++
+int epoll_create(int size);
+/**
+    size 表示的是 epoll 希望监听的文件描述符的个数，这个数值不需要精确的数值，只要是一个大致的数值就可以了
+*/
+```
+
+```c++
+int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+/**
+    EPOLL_CTL_ADD
+    EPOLL_CTL_MOD
+    EPOLL_CTL_DEL
+*/
+
+struct epoll_event {
+    _u32 event;
+    union {
+        void * ptr;
+        int fd;
+        _u32 u32;
+        _u64 u64;
+    } data;
+};
+
+epoll_event::event 中可以监测的事件非常的多
+```
+
+### 轮询
+
+```c++
+int epoll_wait(int epfd, struct epoll_event* event, int maxevents, int timeout);
+/**
+    epoll 监测的事件需要使用轮询进行查看，否则的话应用程序无法接收到这些文件描述符的事件
+    timeout : epoll 查看的时候，不会一直阻塞在这里，等待一定的时间后返回（即使在这个时间内没有事件发生也会返回）
+
+    int 返回发生了事件的文件描述符的个数，epoll_event[] 已经进行了排序，发生事件的 epoll_event 排列在前面
+*/
+```
+
 # BLOCKING 的解释
 
 * 在我们使用多线程 + 阻塞IO 读取的方式进行多连接的编程的时候，线程是被 socket IO  所阻塞，如果 socket 没有准备好数据的话，那么我们的线程就会 blocking 在这个读取或者写入的过程当中

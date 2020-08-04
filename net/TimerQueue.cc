@@ -28,6 +28,9 @@ int createTimerfd()
 	 * CLOCK_MONOTONIC: 以固定的速率运行，从不进行调整和复位 ,它不受任何系统time-of-day时钟修改的影响
 	 * 如果使用的是 CLOCK_MONOTONIC 的话，那么在设置定时时间的时候，设置的值是从 timerfd_settime() 
 	 * 开始的时间间隔。
+	 * 
+	 * 如果你想要睡眠到某一个绝对的时间值，那么 CLOCK_REALTIME 将是一个很好的选择，如果你要睡眠一个相对的值，
+	 * CLOCK_MONOTONIC 将是一个理想的时间源
 	 * 第二个参数和 eventfd() 函数中的相同
 	*/
 	if (timerfd < 0)
@@ -49,7 +52,7 @@ struct timespec howMuchTimeFromNow(Timestamp when)
 		microseconds = 100;
   	}
 
-	struct timespec ts; /**这是一个由微秒和秒构成的微秒精度的时间值*/
+	struct timespec ts; /**这是一个由纳秒和秒构成的纳秒精度的时间值*/
 	ts.tv_sec = static_cast<time_t>(
 		microseconds / Timestamp::kMicorSecondsPerSecond);
 	ts.tv_nsec = static_cast<long>(
@@ -86,6 +89,14 @@ void resetTimerfd(int timerfd, Timestamp expiration)
 	 * newValue 中存储的时将要设置的超时时间
 	 * oldValue 中存储之前存储的超时时间
 	 * 超时时钟在 timerfd_settime() 设定完成之后开始计时
+	 * 
+	 * 这个函数的第二个参数要么是 TIMER_ABSTIME 或者是 0. 如果使用的是 0 的话，我们定时的过程往往是这样实现的：
+	 * 如果我们要定时到 T1, 我们先获取当前的时间 T0, 得到 T1 - T0 ,将这个差值传递给 timerfd_settime()
+	 * 
+	 * 如果设置的是 TIMER_ABSTIME, 我们可以直接指定 T1，不需要自己去计算差值了
+	 * 
+	 * notes : 需要对应的关系 CLOCK_REALTIME <-> TIMER_ABSTIME
+	 * 						CLOCK_MONITONIC <-> 0
 	*/
 	if (ret)
 	{

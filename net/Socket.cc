@@ -90,6 +90,9 @@ void Socket::shutdownWrite()
 
 void Socket::setTcpNoDelay(bool on)
 {
+    /**
+     * 为了防止出现 TCP 的粘包问题，我们不希望 Tcp 等待多个数据报，合并为一个大的数据报一起进行发送
+    */
     int optval = on ? 1 : 0;
     ::setsockopt(this->sockfd_, IPPROTO_TCP, TCP_NODELAY, &optval, static_cast<size_t>(sizeof optval));
 }

@@ -21,7 +21,7 @@ Acceptor::Acceptor(EventLoop* loop, const InetAddress& listenAddr, bool reusepor
 		acceptSocket_(sockets::createNonblockingOrDie(listenAddr.family())),
 		accpetChannel_(loop, acceptSocket_.fd()),
 		listenning_(false),
-		idleFd_(::open("/dev/null", O_RDONLY | O_CLOEXEC))
+		idleFd_(::open("/dev/null", O_RDONLY | O_CLOEXEC)) /*/dev/null 是一个空文件，从这个文件读取数据，将得到 空*/
 {
 	assert(idleFd_ >= 0);
 	this->acceptSocket_.setReuseAddr(true);
@@ -41,12 +41,16 @@ Acceptor::~Acceptor()
 
 void Acceptor::listen()
 {
+	/**
+	 * 不在这个文件描述符上面阻塞等待，而是使用 epoll 进行等待
+	*/
 	this->loop_->assertInLoopThread();
 	this->listenning_  = true;
 	this->acceptSocket_.listen();
 	this->accpetChannel_.enableReading();	/**这个时候， socketfd 被注册到 poller 当中，接受 poller 的检测*/
 	/**
 	 * 一但开始了监听的过程，那么将会不断的处理新到达的连接
+	 * 只需要处理读事件，不用处理写事件
 	*/
 }
 

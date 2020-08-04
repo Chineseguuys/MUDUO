@@ -29,7 +29,7 @@ Timestamp PollPoller::poll(int timeoutMs, ChannelList* activeChannels)
 	 * 
 	 * timeoutMs 的设定，表示 poll 阻塞的方式
 	 *  -1 ： 一直阻塞，直到所监视的 fd 当中有一个到达就绪或者捕获了一个信号
-	 *  0 ： 不会阻塞，立刻返回
+	 *  0 ： 不会阻塞，立刻返回,表示没有任何的事件发生
 	 *  >0 : 阻塞一定的时间，该时间类没有事件到达，则超时返回
 	*/
 	int savedErrno = errno;
@@ -72,7 +72,7 @@ void PollPoller::fillActiveChannles(int numEvents, ChannelList* activeChannels) 
 		if (pfd->revents > 0)
 		{
 			--numEvents;
-			ChannelMap::const_iterator ch = channels_.find(pfd->fd);
+			ChannelMap::const_iterator ch = channels_.find(pfd->fd);  /*根据相应的 fd 来查找其相关连的 channel*/
 			/**
 			 * epoll 中还包含指针项，可以指向 channel* 对象，这使得 epoll 比 poll 又多了一个方便的地方，就是
 			 * 不需要去集合中查询 channel 了，直接通过指针就可以找到 channel
@@ -95,7 +95,7 @@ void PollPoller::updateChannel(Channel* channel)
 	LOG_TRACE << "fd=" << channel->fd() << " events = " << channel->events();
 	if (channel->index() < 0)
 	/**
-	 * 新加入的 channel 没有分配 index, 初始的 index 是小于 0  的
+	 * 新加入的 channel 没有分配 index, 初始的 index 是小于 0  的 (初始的 index 是 -1 ，表示的是一个没有添加到 poll 当中的 channel)
 	*/
 	{
 		assert(channels_.find(channel->fd()) == channels_.end());
@@ -108,8 +108,8 @@ void PollPoller::updateChannel(Channel* channel)
 		pfd.revents = 0;
 		pollfds_.push_back(pfd);
 		int idx = static_cast<int>(pollfds_.size() - 1);
-		channel->set_index(idx);
-		channels_[pfd.fd] = channel;
+		channel->set_index(idx);   /**为 channel 设置一个 index*/
+		channels_[pfd.fd] = channel;   /**映射对 <fd, channel>*/
 	}
 	else 
 	{
@@ -120,9 +120,9 @@ void PollPoller::updateChannel(Channel* channel)
 		struct pollfd& pfd  =pollfds_[idx];
 		assert(pfd.fd == channel->fd() || pfd.fd == -channel->fd() - 1);
 		pfd.fd = channel->fd();
-		pfd.events = static_cast<short>(channel->events());
+		pfd.events = static_cast<short>(channel->events());	/*更新这个文件描述符监听的时间*/
 		pfd.revents = 0;
-		if (channel->isNoneEvent())
+		if (channel->isNoneEvent())		/**如果 channel 不再监听任何的时间*/
 		{
 			pfd.fd = -channel->fd() - 1;
 			/**

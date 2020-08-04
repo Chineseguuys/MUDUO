@@ -57,7 +57,8 @@ protected:
 	typedef std::map<int, Channel*>     ChannelMap;
 	/**
 	 * channels_ 保存了每一个 fd 所关心的事件
-	 * int : index: 表示 channel 在具体的 poller 类 channel 所关联的 pollfd 的下标值
+	 * int : index: 表示 channel 在具体的 poller 类 channel 所关联的 pollfd 的下标值.
+	 * int 存储的是 channel 对应的文件描述符
 	*/
 	ChannelMap	channels_;
 

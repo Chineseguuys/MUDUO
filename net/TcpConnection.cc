@@ -264,7 +264,6 @@ void TcpConnection::shutdown()
 void TcpConnection::shutdownInLoop()
 {
 	this->loop_->assertInLoopThread();
-	LOG_TRACE << "channel_->isWritting() == true";
 	if (!channel_->isWriting())
 	/**
 	 * 缓冲区内有数据的话，那么无法进行 shutdowndown()
@@ -444,6 +443,7 @@ void TcpConnection::handleWrite()
 			{
 				/**
 				 * 输出缓冲区空了，需要提醒上层的模块，需要向 buffer 里面输出数据了
+				 * 注意，每一次缓冲区清空之后都需要这样进行处理 --- 关闭 channel 的写端
 				*/
 				this->channel_->disableWriting();
 				/**
@@ -458,6 +458,10 @@ void TcpConnection::handleWrite()
 				}
 				if (this->state_ == KDisconnecting)	/**如果正在断开连接，关闭写*/
 				{
+					/**
+					 * 前面如果调用过 shutdown()，那么状态 state_ == kDisconnecting。但是当时可能缓冲区的数据还没有发送完
+					 * 现在缓冲区的数据发送完了，因此可以再次执行关闭写端
+					*/
 					shutdownInLoop();
 				}
 			}

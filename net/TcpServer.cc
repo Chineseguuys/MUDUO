@@ -58,7 +58,7 @@ void TcpServer::setThreadNum(int numThreads)
 */
 void TcpServer::start()
 {
-	if (started_.getAndSet(1) == 0)
+	if (started_.getAndSet(1) == 0) /**started_ 的操作是原子的，不需要进行上锁，多线程安全*/
 	{
 		this->threadPool_->start(threadInitCallback_);
 
@@ -76,8 +76,8 @@ void TcpServer::start()
 
 
 /**
- * connector 将监听端口的 socket 添加到了 epoll 的队列当中，每当 socket 有事件到达的时候，就意味着
- * 有新的连接到达了，Connector::handleRead() 是相应的回调函数，回调函数中通过调用 newConnection() 
+ * accepter 将监听端口的 socket 添加到了 epoll 的队列当中，每当 socket 有事件到达的时候，就意味着
+ * 有新的连接到达了，Accepter::handleRead() 是相应的回调函数，回调函数中通过调用 newConnection() 
  * 将这个新的连接通报给 TcpServer
 */
 
@@ -88,6 +88,9 @@ void TcpServer::start()
 */
 void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr)
 {
+	/**
+	 * sockfd 返回一对 Tcp 连接的文件描述符
+	*/
 	this->loop_->assertInLoopThread();
 	EventLoop* ioloop = this->threadPool_->getNextLoop();
 	char buf[64];
@@ -109,10 +112,16 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr)
 		peerAddr));
 	connections_[connName] = conn; /**新的连接添加到 map 当中*/
 	/**
-	 * 一个 Tcp 服务端需要管理多个 Tcp数据连接。使用 map 管理这些连接可以快速进行查找
+	 * 一个 Tcp 服务端需要管理多个 Tcp 数据连接。使用 map 管理这些连接可以快速进行查找
 	*/
 	conn->setConnectionCallback(connectionCallback_);
+	/**
+	 * 连接的状态发生了变化，使用这个回调通知用户程序
+	*/
 	conn->setMessageCallback(messageCallback_);
+	/**
+	 * 有数据到达，使用这个回调来通知上层程序
+	*/
 	conn->setWriteCompleteCallback(writeCompleteCallback_);
 	/**
 	 * 如果一个数据链接需要关闭的时候，自然其要从 TcpServer 当中删除
