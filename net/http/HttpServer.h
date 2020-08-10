@@ -14,7 +14,7 @@ class HttpResponse;
 
 class HttpServer : noncopyable {
 public:
-    typedef std::function<void (HttpRequest&, HttpResponse*) > HttpCallback;
+    typedef std::function<void (const HttpRequest&, HttpResponse*) > HttpCallback;
 
 private:
     TcpServer       server_;

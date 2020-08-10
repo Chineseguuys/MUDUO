@@ -55,6 +55,9 @@ void startRead() {
     }
     AR++;
     pthread_mutex_unlock(&mutex_);
+    /**
+     * 在正式开始进行读取之前，释放锁
+    */
 }
 
 
@@ -268,6 +271,10 @@ int main(int argc, char* argv[]) {
     sem_init(&buffer.cmut, 0, 1);
 
     buffer.nextin = buffer.nextout = 0;
+
+    /**
+     * 线程的初始化的工作，初始化完毕并创建线程之后就可以开始进行线程的处理的工作
+    */
 }
 ```
 
@@ -324,4 +331,101 @@ int  pthread_rwlock_rdlock(pthread_rwlock_t *rwlock );
 
 int  pthread_rwlock_wrlock(pthread_rwlock_t *rwlock );
 ```
+
+## **全局的线程的属性的设置和初始化**
+
+```c
+#include <pthread.h>
+pthread_attr_t tattr;
+
+int ret;
+/* initialize an attribute to the default value */
+ret = pthread_attr_init(&tattr);
+
+/* destroy an attribute */
+ret = pthread_attr_destroy(&tattr);
+```
+
+实际上 ```pthread_attr_t``` 类型就是一个结构体，其中存储了所有的属性的状态值
+
+### 设置多线程的调度的策略
+
+我们知道在操作系统当中，多个进程的调度需要进行一定的调度算法来进行管理。我们不可能让一个进程永远的占用 CPU 来进行执行。
+
+```c
+pthread_attr_setschedPolicy(pthread_attr_t*, int policy);
+```
+
+设置线程的调度有两种可以选择的策略  
+
+```SCHED_FIFO``` : 先进先出的策略，一个线程可以一直进行运行，直到出现了更高优先级的线程，或者当前的线程主动的进行了睡眠，或者发生了阻塞，才会调度其他的线程
+
+```SCHED_RR```  : 轮循。 有时间片大小的设置，一个线程运行超出了一定的时间片的长度，它需要交出自己的使用权，调度其他的线程
+
+```SCHED_OTHER``` : 使用操作系统默认的调度算法
+
+### 是应用级线程还是系统级线程
+
+```c
+#include <pthread.h>
+pthread_attr_t tattr;
+int ret;
+/* bound thread */
+ret = pthread_attr_setscope(&tattr, PTHREAD_SCOPE_SYSTEM);
+/* unbound thread */
+ret = pthread_attr_setscope(&tattr, PTHREAD_SCOPE_PROCESS);
+```
+
+设置为系统级线程的话，那么进程的所有的线程将和操作系统中的所有的线程一起竞争 CPU 的使用权，如果是应用级的线程的话，那么进程中的线程只和进程内的线程竞争资源
+
+> 当前的 pthread 只实现了系统级线程（实际上系统级的线程也更加的合理）
+
+### 设置线程的继承属性
+
+```c
+#include <pthread.h>
+pthread_attr_t tattr;
+int inheritsched;
+int ret;
+/* use creating thread’s scheduling policy and priority*/
+ret = pthread_attr_setinheritsched(&tattr, PTHREAD_INHERIT_SCHED);
+```
+
+所谓的继承权，指的就是当创建一个新的线程的时候，新的线程可以继承父线程（创建者线程）的调度的属性。如果新的线程不希望继承父线程的调度属性，就要放弃继承权
+
+```PTHREAD_INHERIT_SCHED``` : 表示的是创建的线程继承父线程的调度的策略以及线程创建的属性
+
+```PTHREAD_EXPLICIT_SCHED``` : 不继承父线程的调度策略和属性，那么在创建线程的时候，在 ```pthread_create()``` 函数当中需要给出线程创建的属性信息
+
+### 每一个线程的堆栈的设置
+
+一般情况下操作系统会自动的为每一个线程在虚拟内存空间当中设置一个栈，操作系统使用 mmap() 来完成设置。为了防止堆栈的溢出，操作系统为每一个堆栈设置了一个警戒区域，当堆栈的使用到达了警戒区域，将会发出警告（显然，栈的分配是以页的大小来进行的）
+
+当然如果你可以准确的知道自己的线程的栈的大小是多少的话，你可以指定栈的大小，甚至可以指定栈的开始的位置
+
+```c
+#include <pthread.h>
+#include <limits.h>
+pthread_attr_t tattr;
+size_t size;
+int ret;
+size = (PTHREAD_STACK_MIN + 0x4000);
+/* setting a new size */
+ret = pthread_attr_setstacksize(&tattr, size);
+```
+
+```c
+#include <pthread.h>
+#include <limits.h>
+pthread_attr_t tattr;
+void *base;
+size_t size;
+int ret;
+base = (void *) malloc(PTHREAD_STACK_MIN + 0x4000);
+/* setting a new address and size */
+ret = pthread_attr_setstack(&tattr, base,PTHREAD_STACK_MIN + 0x4000);
+```
+使用 ```malloc``` 向操作系统申请一块新的一定大小的内存，之后用这个内存作为栈区
+
+
 

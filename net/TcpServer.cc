@@ -127,7 +127,8 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr)
 	 * 如果一个数据链接需要关闭的时候，自然其要从 TcpServer 当中删除
 	*/
 	conn->setCloseCallback(
-      std::bind(&TcpServer::removeConnection, this, _1)); // FIXME: unsafe
+      	std::bind(&TcpServer::removeConnection, this, _1)); // FIXME: unsafe
+
 	ioloop->runInLoop(std::bind(&TcpConnection::connectEstablished, conn));
 }
 

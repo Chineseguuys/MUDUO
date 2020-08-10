@@ -42,7 +42,7 @@ private:
                          Timestamp)
     {
         printf("<<< %s\n", message.c_str());
-    } 
+    }
 
 public:
     ChatClient(EventLoop* loop, const InetAddress& serverAddr)
@@ -61,7 +61,7 @@ public:
     void write(const StringPiece& message)
     {
         MutexLockGuard lock(mutex_);
-        if (connection_)
+        if (connection_)    /*如果连接还存在的话，才可以发送数据*/
         {
             codec_.send(get_pointer(connection_), message);
         }

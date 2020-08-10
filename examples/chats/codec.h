@@ -22,7 +22,7 @@ public:
     explicit LengthHeaderCodec(const StringMessageCallback& cb)
         : messageCallback_(cb)
     {
-    } 
+    }
     void onMessage(const muduo::net::TcpConnectionPtr& conn,
                  muduo::net::Buffer* buf,
                  muduo::Timestamp receiveTime)
